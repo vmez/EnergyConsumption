@@ -9,6 +9,7 @@ The data process has been to:
 - Visualize several periods of time to understand consumption patterns - if any.
 - Build predictive models for different time series.
 
+
 * Next steps are to improve visualization using Shiny App.
 
 ** A lot of work has been put to understand the differences in computational time, and consequences of using a library vs another. Particularly, careful attention was put to understand the difference between strptime, as.POSIXct, and parse_date_time to set the class for a parsed column containing information of date and time of each observation.
