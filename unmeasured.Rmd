@@ -1,0 +1,71 @@
+---
+title: "Unmeasured Energy"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Loading Packages}
+pacman:: p_load(dplyr, tidyr, lubridate, ggplot2, scales)
+```
+
+```{r Import data}
+data_parse <- data.table::fread("C:/Users/Violeta/Documents/Ubiqum/3_Deep.Analytics/Energy/household_power_consumption.txt", sep = ";", na.strings = '?')
+```
+
+```{r unite + convert to time format}
+data_parse <- data_parse %>% unite(DateTime, Date, Time, sep = " ", remove = F)
+data_parse <- data_parse %>% mutate(Date = dmy(Date))
+data_parse$DateTime <- parse_date_time(data_parse$DateTime, orders = "dmy HMS")
+table(complete.cases(data_parse$DateTime))
+```
+
+```{r Proportion of NA}
+table(complete.cases(data_parse)) # returns obs. containing NA
+(25979 / nrow(data_parse)) * 100     # 1.25% obs (rows) missing data
+
+table(is.na(data_parse))           #returns count of NA.
+(181853/(nrow(data_parse)*9)) * 100   # 0.97% cells with missing data
+```
+
+```{r In UTC, how long the NA last?}
+data_parse_na <- data_parse %>% filter(!complete.cases(.))
+
+count_min_na <- data_parse_na %>% group_by(Date) %>% 
+  arrange(Date, .by_group = TRUE) %>% tally()
+# 82 obs with NA
+
+table(count_min_na$n)
+# 21 obs with more than 7hrs of unmeasured energy
+
+no_power_days <- count_min_na %>% filter(n >= 1440)
+# 9 full days with no power
+```
+
+```{r pressure, Plotting Duration of Unmeasured Consumption}
+ggplot(count_min_na, aes(n)) + geom_histogram(bins = 50, fill = "blue") +
+  ggtitle("Duration of Unmeasured Consumption", subtitle = "47 Moths of Data") +
+  xlab("Minutes per Day") + ylab("Times it Occurred") +
+  theme_minimal()
+```
+
+```{r pressure, Calendar of Occurence}
+source("http://blog.revolutionanalytics.com/downloads/calendarHeat.R")
+
+calendarHeat(count_min_na$Date, count_min_na$n, 
+             varname="Unmeasured Consumption per Minute", color="r2b")
+```
+
+```{r Cause of unmeasured consumption?}
+# Filter day of first minute NA
+first <- data_parse %>% filter(Date == "2006-12-21")
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
